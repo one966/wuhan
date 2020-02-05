@@ -1,6 +1,7 @@
 import time ,json,requests,datetime
-
-from pyecharts import Map
+from pyecharts import options as opts
+from pyecharts.charts import Map
+from faker import Faker
 class model:
         listmodel = list()
         def _init_(self,confirm,Province,city,dead,healm,addmun):
@@ -17,7 +18,7 @@ class model:
 
 
 updatetime=''
-
+Faker = Faker(locale='zh_CN')
 
 def getProvince():
             url = 'https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5&callback=&_=%d'%int(time.time()*1000)
@@ -62,11 +63,12 @@ def setdata():
 
 def setprovalue():
     model1 = model()
+    listpro = dict()
     value= getCity()
     for item in value:
-        model1.listmodel.append(item['total']['confirm'])
-        model1.Province=item['name']
-    return model1
+        listpro[item['name']]=item['total']['confirm']
+        #model1.Province=item['name']
+    return listpro
 
 def chinaMap(value):
     province_distribution = {'河南': 45.23, '北京': 37.56, '河北': 21, '辽宁': 12, '江西': 6, '上海': 20, '安徽': 10, '江苏': 16,
@@ -87,17 +89,33 @@ def chinaMap(value):
     map.add("疫情", provice, values, visual_range=[0, 500],maptype='china', is_visualmap=True,
             visual_text_color='#000', is_label_show=True)
     map.render(path="中国地图.html")
+
 def map_visualmap(value) -> Map:
     c = (
         Map()
-        .add("疫情分布", [list(z) for z in zip(value.keys() ,value.values())], "china")
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="Map-VisualMap（分段型）"),
-            visualmap_opts=opts.VisualMapOpts(max_=200, is_piecewise=True),
+            .add("确诊人数", [list(z) for z in zip(value.keys(),value.values())], "china")
+            .set_global_opts(
+            title_opts=opts.TitleOpts(title="实时疫情地图"),
+            visualmap_opts=opts.VisualMapOpts(is_piecewise=True,pieces=[
+                 {"min": "1", "max": "9", "label": "1-9人", "color": "#FFA07A"},
+                 {"min": "10", "max": "99", "label": "10-99人", "color": "#FA8072"},
+                 {"min": "100", "max": "999", "label": "100-999人", "color": "#EE2C2C"},
+                 {"min": "1000", "max": "","label": ">1000人", "color": "#8B1A1A"},
+             ]),
         )
     )
 
     return c
+def getpromap()->Map:
+    c=(
+        Map()
+            .add("确诊人数",[list(z) for z in zip(Faker.providers, Faker.random_digit())] ,"广东")
+            .set_global_opts(
+            title_opts=opts.TitleOpts(title="广东疫情"),
+            visualmap_opts=opts.VisualMapOpts(max_='200',  is_piecewise=True),
+        )
+    )
+
 
 def promap():
     # attr, value要显示的数值
@@ -119,13 +137,23 @@ def promap():
 if __name__=='__main__':
     data= setdata()
     data1 = getCity()
-    promap()
-    #data2=setprovalue()
+    data2=setprovalue()
     #print(data2.keys())
+    #print(data2.values())
+    #zipp = zip(data2.keys(),data2.values())
+    #promap()
+    #data2=setprovalue()
+    #print(list(zipp))
     #print(len(data1.keys()))
     #print(len(data1.values()))
-    chinaMap(data1)
-    #map_visualmap(data2)
+    #chinaMap(data1)
+    for ite in Faker.province():
+        print(ite)
+
+    #getpromap()
+
+    #map= map_visualmap(data2)
+   # map.render(path='snapshot.html')
 
 
 
